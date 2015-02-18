@@ -1,0 +1,74 @@
+package assignment1;
+
+import lejos.hardware.motor.Motor;
+import lejos.hardware.port.SensorPort;
+import lejos.robotics.SampleProvider;
+import lejos.utility.Delay;
+import lejos.hardware.sensor.EV3TouchSensor;
+import lejos.hardware.sensor.EV3UltrasonicSensor;
+import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.hardware.sensor.SensorMode;
+
+public class Assignment1 {
+	private static EV3UltrasonicSensor us;
+	private static EV3ColorSensor cs;
+	private static SampleProvider ts;
+
+	public static void main(String[] args) {
+		EV3ColorSensor cs = new EV3ColorSensor(SensorPort.S3);
+		cs.setFloodlight(false);
+		ts = new EV3TouchSensor(SensorPort.S1);
+		float[] tsample = new float[ts.sampleSize()]; 			//get touch sensor state
+		ts.fetchSample(tsample, 0);  							//check array - Index 0 is 0.0 touched, 1.0 untouched
+		while (true) {
+			ts.fetchSample(tsample, 0);
+			if (tsample[0] == 0) {
+				Motor.B.setSpeed(400);
+				Motor.C.setSpeed(400);
+				Motor.B.backward();
+				Motor.C.backward();
+			} else {
+				Motor.B.setSpeed(400);
+				Motor.C.setSpeed(400);
+				Motor.B.forward();
+				Motor.C.forward();
+				SensorMode brightness = cs.getAmbientMode();
+				float[] csample = new float[brightness.sampleSize()];
+				cs.fetchSample(csample, 0);
+				while (true) {
+					cs.fetchSample(csample, 0);
+					if (csample[0] >= .5) {
+						Motor.B.setSpeed(400);
+						Motor.C.setSpeed(400);
+						Motor.B.backward();
+						Motor.C.backward();
+					} else {
+						us = new EV3UltrasonicSensor(SensorPort.S2);
+						SampleProvider distance = us.getDistanceMode();
+						float[] usample = new float[distance.sampleSize()];
+						usample = new float[distance.sampleSize()];
+						us.fetchSample(usample, 0);
+						while (true) {
+							us.fetchSample(usample, 0);
+							if (usample[0] <= 1) {
+								Motor.B.setSpeed(100);
+								Motor.C.setSpeed(100);
+								Motor.B.forward();
+								Motor.C.forward();
+								if (usample [0] <= .3) {
+									Motor.B.stop();
+									Motor.C.stop();
+									Motor.B.setSpeed(200);
+									Motor.C.setSpeed(200);
+									Motor.B.backward();
+									Motor.C.forward();
+									Delay.msDelay(2000);
+								}
+							}
+						}
+					}
+				}	
+			}
+		}
+	}
+}
